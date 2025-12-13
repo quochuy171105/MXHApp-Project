@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/feed">
+
+    <!-- FIX: ID must match menu item ID -->
+    <fragment
+        android:id="@id/feed"
+        android:name="huynguyen.com.MXHApp.Fragments.FeedFragment"
+        android:label=""
+        tools:layout="@layout/fragment_feed" />
+
+    <!-- FIX: ID must match menu item ID -->
+    <fragment
+        android:id="@id/following"
+        android:name="huynguyen.com.MXHApp.Fragments.FollowingFragment"
+        android:label=""
+        tools:layout="@layout/fragment_following" />
+
+    <!-- FIX: ID must match menu item ID -->
+    <fragment
+        android:id="@id/post" 
+        android:name="huynguyen.com.MXHApp.Fragments.PostPlaceholderFragment"
+        android:label="" />
+
+    <!-- FIX: ID must match menu item ID -->
+    <fragment
+        android:id="@id/search"
+        android:name="huynguyen.com.MXHApp.Fragments.SearchFragment" 
+        android:label=""
+        tools:layout="@layout/fragment_search_users" />
+
+    <!-- FIX: ID must match menu item ID -->
+    <fragment
+        android:id="@id/profile"
+        android:name="huynguyen.com.MXHApp.Fragments.UserFragment"
+        android:label=""
+        tools:layout="@layout/fragment_user" />
+
+</navigation>

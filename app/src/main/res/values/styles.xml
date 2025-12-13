@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- NÂNG CẤP: Thay đổi chủ đề cha để hỗ trợ Material Components -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <item name="colorPrimary">#8696EC</item>
+        <item name="colorPrimaryDark">#B6000000</item>
+        <item name="colorAccent">#03A9F4</item>
+
+
+    </style>
+    
+    <!-- NÂNG CẤP: Thay đổi chủ đề cha để hỗ trợ Material Components -->
+    <style name="Theme.SignInFunction" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <item name="colorPrimary">#8696EC</item>
+        <item name="colorPrimaryDark">#DCDCDC</item>
+        <item name="colorAccent">#03A9F4</item>
+
+    </style>
+
+</resources>
