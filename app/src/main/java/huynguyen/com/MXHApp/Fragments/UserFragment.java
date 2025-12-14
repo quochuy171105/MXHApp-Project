@@ -141,7 +141,8 @@ public class UserFragment extends Fragment {
     }
 
     private void loadProfileData() {
-        if (user == null || profileid == null || profileid.isEmpty() || getContext() == null) return;
+        if (user == null || profileid == null || profileid.isEmpty() || getContext() == null)
+            return;
         removeAllListeners();
 
         getUserData();
@@ -201,10 +202,12 @@ public class UserFragment extends Fragment {
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
     }
 
@@ -222,7 +225,7 @@ public class UserFragment extends Fragment {
         popupMenu.getMenuInflater().inflate(R.menu.profile_options_menu, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == R.id.logout_option) {
-                if(getContext() != null) {
+                if (getContext() != null) {
                     SharedPreferences.Editor editor = getContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE).edit();
                     editor.remove("profileid");
                     editor.apply();
@@ -264,37 +267,37 @@ public class UserFragment extends Fragment {
         listeners.add(userListener);
     }
 
-    private void getFollowerCount(){
+    private void getFollowerCount() {
         if (profileid == null) return;
         ListenerRegistration followerListener = firestore.collection("users").document(profileid).collection("followers")
                 .addSnapshotListener((value, error) -> {
-                    if(error != null){
+                    if (error != null) {
                         Log.w(TAG, "Listen failed.", error);
                         return;
                     }
-                    if(binding != null && value != null){
+                    if (binding != null && value != null) {
                         binding.followersCount.setText(String.valueOf(value.size()));
                     }
                 });
         listeners.add(followerListener);
     }
 
-    private void getFollowingCount(){
+    private void getFollowingCount() {
         if (profileid == null) return;
         ListenerRegistration followingListener = firestore.collection("users").document(profileid).collection("following")
                 .addSnapshotListener((value, error) -> {
-                    if(error != null){
+                    if (error != null) {
                         Log.w(TAG, "Listen failed.", error);
                         return;
                     }
-                    if(binding != null && value != null){
+                    if (binding != null && value != null) {
                         binding.followingCount.setText(String.valueOf(value.size()));
                     }
                 });
         listeners.add(followingListener);
     }
 
-    private void getMyPosts(){
+    private void getMyPosts() {
         if (profileid == null) return;
         CollectionReference postsRef = firestore.collection("posts");
         Query postsQuery = postsRef.whereEqualTo("publisher", profileid)
@@ -338,30 +341,30 @@ public class UserFragment extends Fragment {
         listeners.add(savedIdsListener);
     }
 
-    private void fetchSavedPosts(){
+    private void fetchSavedPosts() {
         savedPostsList.clear();
         if (savedPostsIdList.isEmpty()) {
             savedPostsAdapter.notifyDataSetChanged();
             return;
         }
-        for(String id : savedPostsIdList){
+        for (String id : savedPostsIdList) {
             ListenerRegistration postListener = firestore.collection("posts").document(id).addSnapshotListener((snapshot, error) -> {
                 if (error != null) {
                     Log.w(TAG, "Fetch saved post failed: " + id, error);
                     return;
                 }
-                if(snapshot != null && snapshot.exists()){
+                if (snapshot != null && snapshot.exists()) {
                     Posts post = snapshot.toObject(Posts.class);
-                    if(post != null){
+                    if (post != null) {
                         boolean exists = false;
-                        for(int i = 0; i < savedPostsList.size(); i++){
-                            if(savedPostsList.get(i).getPostid().equals(post.getPostid())){
+                        for (int i = 0; i < savedPostsList.size(); i++) {
+                            if (savedPostsList.get(i).getPostid().equals(post.getPostid())) {
                                 savedPostsList.set(i, post); // Update existing post
                                 exists = true;
                                 break;
                             }
                         }
-                        if(!exists){
+                        if (!exists) {
                             savedPostsList.add(post);
                         }
                     }
@@ -380,7 +383,7 @@ public class UserFragment extends Fragment {
                         Log.w(TAG, "Listen failed.", error);
                         return;
                     }
-                    if(binding != null) {
+                    if (binding != null) {
                         binding.profileActionButton.setText(snapshot != null && snapshot.exists() ? "Following" : "Follow");
                     }
                 });
@@ -388,7 +391,7 @@ public class UserFragment extends Fragment {
     }
 
     private void followUser() {
-        if(user == null || profileid == null) return;
+        if (user == null || profileid == null) return;
         WriteBatch batch = firestore.batch();
 
         DocumentReference followingRef = firestore.collection("users").document(user.getUid()).collection("following").document(profileid);
@@ -401,7 +404,7 @@ public class UserFragment extends Fragment {
     }
 
     private void unfollowUser() {
-        if(user == null || profileid == null) return;
+        if (user == null || profileid == null) return;
         WriteBatch batch = firestore.batch();
 
         DocumentReference followingRef = firestore.collection("users").document(user.getUid()).collection("following").document(profileid);
