@@ -221,7 +221,6 @@ public class EditProfileActivity extends AppCompatActivity {
                     Toast.makeText(EditProfileActivity.this, "Error updating profile.", Toast.LENGTH_SHORT).show();
                 });
     }
-
     private void setUploadingState(boolean isUploading) {
         if (isUploading) {
             binding.progressBar.setVisibility(View.VISIBLE);

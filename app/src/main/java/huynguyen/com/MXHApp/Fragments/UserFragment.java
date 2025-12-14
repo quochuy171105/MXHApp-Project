@@ -415,7 +415,6 @@ public class UserFragment extends Fragment {
 
         batch.commit().addOnFailureListener(e -> Log.e(TAG, "Failed to unfollow user", e));
     }
-
     private void openShowList(String title) {
         if (getActivity() == null) return;
         Intent intent = new Intent(getActivity(), ShowList.class);
