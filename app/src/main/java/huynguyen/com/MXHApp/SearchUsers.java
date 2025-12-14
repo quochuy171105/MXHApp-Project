@@ -1,14 +1,10 @@
 package huynguyen.com.MXHApp;
 
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.EditText;
-import android.widget.ImageView;
-
+import android.util.Log;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -16,38 +12,85 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import huynguyen.com.MXHApp.Adapter.SearchAdapter;
 import huynguyen.com.MXHApp.Model.User;
+import huynguyen.com.MXHApp.databinding.ActivitySearchUsersBinding;
 
 public class SearchUsers extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
-    private SearchAdapter adapter;
-    private List<User> mUsers;
+    private static final String TAG = "SearchUsers";
 
-    EditText search;
-    ImageView back;
+    private ActivitySearchUsersBinding binding;
+    private SearchAdapter adapter;
+    private List<User> userList;
+    private FirebaseFirestore firestore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_search_users);
+        binding = ActivitySearchUsersBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        // TODO: Initialize Views
+        firestore = FirebaseFirestore.getInstance();
 
-        // TODO: Set up RecyclerView
+        // Setup Toolbar
+        setSupportActionBar(binding.toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false); // Hide default title
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
 
-        // TODO: Add TextWatcher to the search EditText
+        // Setup RecyclerView
+        binding.recyclerView.setHasFixedSize(true);
+        binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        userList = new ArrayList<>();
+        adapter = new SearchAdapter(this, userList);
+        binding.recyclerView.setAdapter(adapter);
 
-        // TODO: Load initial users
+        setupSearchView();
+
+        // Initial load
+        searchUsers("");
     }
 
-    private void searchUsers(String s) {
-        // TODO: Implement Firestore query to search for users based on input string
+    private void setupSearchView() {
+        binding.searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                searchUsers(query.toLowerCase(Locale.ROOT));
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                searchUsers(newText.toLowerCase(Locale.ROOT));
+                return false;
+            }
+        });
     }
 
-    private void readUsers() {
-        // TODO: Implement Firestore query to load all users initially
+    private void searchUsers(String searchText) {
+        Query query;
+        if (searchText.isEmpty()) {
+            query = firestore.collection("users").limit(20);
+        } else {
+            query = firestore.collection("users")
+                    .orderBy("username")
+                    .startAt(searchText)
+                    .endAt(searchText + "\uf8ff");
+        }
+
+        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+            if(isDestroyed()) return; // Avoid updating a destroyed activity
+            userList.clear();
+            for (QueryDocumentSnapshot snapshot : queryDocumentSnapshots) {
+                User user = snapshot.toObject(User.class);
+                userList.add(user);
+            }
+            adapter.notifyDataSetChanged();
+        }).addOnFailureListener(e -> {
+            Log.e(TAG, "Error searching users", e);
+        });
     }
 }
