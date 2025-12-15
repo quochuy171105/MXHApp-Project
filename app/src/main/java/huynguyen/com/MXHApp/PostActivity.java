@@ -9,11 +9,13 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.FieldValue;
 import huynguyen.com.MXHApp.databinding.ActivityPostBinding;
 import com.google.firebase.auth.FirebaseAuth;
@@ -23,8 +25,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class PostActivity extends AppCompatActivity {
+
+    private static final String TAG = "PostActivity";
+
     private ActivityPostBinding binding;
 
     private Uri postUri;
@@ -33,6 +39,10 @@ public class PostActivity extends AppCompatActivity {
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
     private StorageReference storageReference;
+
+    // Edit Mode State
+    private boolean isEditMode = false;
+    private String postIdToEdit = null;
 
     // Launcher mới để chọn ảnh bằng Photo Picker
     private final ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
@@ -55,26 +65,85 @@ public class PostActivity extends AppCompatActivity {
         auth = FirebaseAuth.getInstance();
         user = auth.getCurrentUser();
         firestore = FirebaseFirestore.getInstance();
+        storageReference = FirebaseStorage.getInstance().getReference().child("Posts");
 
         if (user == null) {
-            Toast.makeText(this, "You must be logged in to post.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "You must be logged in.", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        storageReference = FirebaseStorage.getInstance().getReference().child("Posts");
+        // Check for Edit Mode
+        if (getIntent().hasExtra("postIdToEdit")) {
+            isEditMode = true;
+            postIdToEdit = getIntent().getStringExtra("postIdToEdit");
+            prepareEditMode();
+        } else {
+            isEditMode = false;
+            prepareCreateMode();
+        }
 
+        binding.cancelPost.setOnClickListener(v -> finish());
+    }
+
+    private void prepareCreateMode() {
+        binding.postUpload.setText("Post");
         binding.postUpload.setEnabled(false); // Disable post button initially
-
         binding.pick.setOnClickListener(v -> {
             pickMedia.launch(new PickVisualMediaRequest.Builder()
                     .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                     .build());
         });
-
         binding.postUpload.setOnClickListener(v -> uploadPost());
+    }
 
-        binding.cancelPost.setOnClickListener(v -> finish());
+    private void prepareEditMode() {
+        binding.postUpload.setText("Update");
+        binding.postUpload.setEnabled(false); // Keep disabled until data is loaded
+        binding.pick.setClickable(false); // Disable changing the image in edit mode
+        loadPostForEditing();
+        binding.postUpload.setOnClickListener(v -> updatePost());
+    }
+
+    private void loadPostForEditing() {
+        firestore.collection("posts").document(postIdToEdit).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String imageUrl = documentSnapshot.getString("postImage");
+                    String description = documentSnapshot.getString("description");
+
+                    binding.postDescription.setText(description);
+                    if (imageUrl != null && !isDestroyed()) {
+                        Glide.with(this).load(imageUrl).into(binding.pick);
+                    }
+                    binding.postUpload.setEnabled(true); // Enable button after data is loaded
+                } else {
+                    Toast.makeText(this, "Post not found.", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to load post for editing.", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error loading post", e);
+                finish();
+            });
+    }
+
+    private void updatePost() {
+        setUploadingState(true);
+        String newDescription = binding.postDescription.getText().toString();
+        firestore.collection("posts").document(postIdToEdit)
+            .update("description", newDescription)
+            .addOnSuccessListener(aVoid -> {
+                setUploadingState(false);
+                Toast.makeText(this, "Post updated!", Toast.LENGTH_SHORT).show();
+                finish();
+            })
+            .addOnFailureListener(e -> {
+                setUploadingState(false);
+                Toast.makeText(this, "Failed to update post.", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error updating post", e);
+            });
     }
 
     private void uploadPost() {
@@ -85,7 +154,7 @@ public class PostActivity extends AppCompatActivity {
 
         String extension = fileExtension(postUri);
         if (extension == null || extension.isEmpty()) {
-            Toast.makeText(this, "Cannot determine file type. Please select another image.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cannot determine file type.", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -118,13 +187,13 @@ public class PostActivity extends AppCompatActivity {
         map.put("postImage", url);
         map.put("description", binding.postDescription.getText().toString());
         map.put("publisher", user.getUid());
-        map.put("timestamp", FieldValue.serverTimestamp()); // Use Firestore server timestamp
+        map.put("timestamp", FieldValue.serverTimestamp());
 
         firestore.collection("posts").document(postid).set(map).addOnCompleteListener(task -> {
             setUploadingState(false);
             if (task.isSuccessful()) {
                 Toast.makeText(PostActivity.this, "New post added!", Toast.LENGTH_SHORT).show();
-                setResult(Activity.RESULT_OK); // Set result for the previous screen
+                setResult(Activity.RESULT_OK);
                 finish();
             } else {
                 Toast.makeText(PostActivity.this, "Failed to save post data.", Toast.LENGTH_SHORT).show();
@@ -136,6 +205,8 @@ public class PostActivity extends AppCompatActivity {
         binding.progressBarPost.setVisibility(isUploading ? View.VISIBLE : View.GONE);
         binding.postUpload.setEnabled(!isUploading);
         binding.cancelPost.setEnabled(!isUploading);
-        binding.pick.setEnabled(!isUploading);
+        if(!isEditMode) {
+            binding.pick.setEnabled(!isUploading);
+        }
     }
 }

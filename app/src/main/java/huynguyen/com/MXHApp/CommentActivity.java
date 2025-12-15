@@ -38,7 +38,7 @@ public class CommentActivity extends AppCompatActivity {
     private FirebaseUser firebaseUser;
     private FirebaseFirestore firestore;
     private String postId;
-    private String publisherId;
+    private String publisherId; // This is the post's publisher
 
     private ListenerRegistration commentsListener;
 
@@ -76,7 +76,8 @@ public class CommentActivity extends AppCompatActivity {
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         commentList = new ArrayList<>();
-        commentAdapter = new CommentAdapter(this, commentList, postId);
+        // REFACTORED: Pass the post's publisherId to the adapter
+        commentAdapter = new CommentAdapter(this, commentList, postId, publisherId);
         binding.recyclerView.setAdapter(commentAdapter);
     }
 
@@ -84,7 +85,7 @@ public class CommentActivity extends AppCompatActivity {
         binding.post.setOnClickListener(v -> {
             String commentText = binding.addComment.getText().toString();
             if (commentText.isEmpty()) {
-                Toast.makeText(CommentActivity.this, "You can't send an empty comment", Toast.LENGTH_SHORT).show();
+                Toast.makeText(CommentActivity.this, "You can\'t send an empty comment", Toast.LENGTH_SHORT).show();
             } else {
                 addComment(commentText);
             }

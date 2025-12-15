@@ -44,7 +44,9 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         holder.binding.comment.setText(notification.getComment());
         getUserInfo(holder);
-        if (notification.isIspost()) {
+
+        // REFACTORED: Use the new standard getter isPost()
+        if (notification.isPost()) {
             holder.binding.postImage.setVisibility(View.VISIBLE);
             getPostImage(holder);
         } else {
@@ -52,8 +54,8 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
 
         holder.itemView.setOnClickListener(v -> {
-            if (notification.isIspost()) {
-                // Correct way: Pass data through the Intent
+            // REFACTORED: Use the new standard getter isPost()
+            if (notification.isPost()) {
                 Intent intent = new Intent(mContext, PostDetails.class);
                 intent.putExtra("postid", notification.getPostid());
                 mContext.startActivity(intent);

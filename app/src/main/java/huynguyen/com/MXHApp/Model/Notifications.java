@@ -1,16 +1,17 @@
 package huynguyen.com.MXHApp.Model;
 
 public class Notifications {
-    String userid;
-    String comment;
-    String postid;
-    boolean ispost;
+    private String userid;
+    private String comment;
+    private String postid;
+    // REFACTORED: Renamed field for better deserialization
+    private boolean post;
 
-    public Notifications(String userid, String comment, String postid, boolean ispost) {
+    public Notifications(String userid, String comment, String postid, boolean post) {
         this.userid = userid;
         this.comment = comment;
         this.postid = postid;
-        this.ispost = ispost;
+        this.post = post;
     }
 
     public Notifications(){}
@@ -39,11 +40,13 @@ public class Notifications {
         this.postid = postid;
     }
 
-    public boolean isIspost() {
-        return ispost;
+    // REFACTORED: Renamed getter to standard Java convention
+    public boolean isPost() {
+        return post;
     }
 
-    public void setIspost(boolean ispost) {
-        this.ispost = ispost;
+    // REFACTORED: Renamed setter to standard Java convention
+    public void setPost(boolean post) {
+        this.post = post;
     }
 }

@@ -71,17 +71,19 @@ public class SearchUsers extends AppCompatActivity {
     }
 
     private void searchUsers(String searchText) {
-        Query query;
+        Query baseQuery = firestore.collection("users")
+                                   .whereNotEqualTo("role", "admin");
+
+        Query finalQuery;
         if (searchText.isEmpty()) {
-            query = firestore.collection("users").limit(20);
+            finalQuery = baseQuery.limit(20);
         } else {
-            query = firestore.collection("users")
-                    .orderBy("username")
-                    .startAt(searchText)
-                    .endAt(searchText + "\uf8ff");
+            finalQuery = baseQuery.orderBy("username")
+                                .startAt(searchText)
+                                .endAt(searchText + "\uf8ff");
         }
 
-        query.get().addOnSuccessListener(queryDocumentSnapshots -> {
+        finalQuery.get().addOnSuccessListener(queryDocumentSnapshots -> {
             if(isDestroyed()) return; // Avoid updating a destroyed activity
             userList.clear();
             for (QueryDocumentSnapshot snapshot : queryDocumentSnapshots) {

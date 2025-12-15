@@ -53,15 +53,19 @@
             app:layout_constraintTop_toBottomOf="@+id/username"
             tools:text="2 hours ago" />
 
+        <!-- REFACTORED: Increased size of the more button for easier touch interaction -->
         <ImageView
             android:id="@+id/more"
-            android:layout_width="wrap_content"
-            android:layout_height="0dp"
-            android:padding="16dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="12dp"
             android:src="@drawable/ic_options"
             app:layout_constraintBottom_toBottomOf="@+id/profile_image"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/profile_image" />
+            app:layout_constraintTop_toTopOf="@+id/profile_image"
+            tools:ignore="ContentDescription" />
 
         <!-- Post Image -->
         <ImageView

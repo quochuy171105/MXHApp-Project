@@ -2,6 +2,7 @@ package huynguyen.com.MXHApp;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -12,6 +13,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -73,6 +76,20 @@ public class HomeActivity extends AppCompatActivity {
                 return false; // Don't reselect the same item
             }
             return NavigationUI.onNavDestinationSelected(item, navController);
+        });
+
+        // ADDED: Listener to handle reselecting the same tab
+        binding.bottomNav.setOnItemReselectedListener(item -> {
+            if (item.getItemId() == R.id.profile) {
+                // When profile is re-selected, force it to show the current user's profile
+                SharedPreferences.Editor editor = getSharedPreferences("PREFS", MODE_PRIVATE).edit();
+                editor.putString("profileid", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                editor.apply();
+
+                // Reload the fragment by navigating to it again
+                navController.popBackStack(R.id.profile, true); // Prevent building up a large stack
+                navController.navigate(R.id.profile);
+            }
         });
     }
 
