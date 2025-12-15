@@ -53,21 +53,23 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     private void loadUsers() {
-        firestore.collection("users").addSnapshotListener((snapshots, error) -> {
-            if (error != null) {
-                Log.w(TAG, "Listen failed.", error);
-                return;
-            }
+        firestore.collection("users")
+                .whereNotEqualTo("role", "admin") // <-- Added this line to filter out admins
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.w(TAG, "Listen failed.", error);
+                        return;
+                    }
 
-            if (snapshots != null) {
-                userList.clear();
-                for (QueryDocumentSnapshot doc : snapshots) {
-                    User user = doc.toObject(User.class);
-                    userList.add(user);
-                }
-                adapter.notifyDataSetChanged();
-            }
-        });
+                    if (snapshots != null) {
+                        userList.clear();
+                        for (QueryDocumentSnapshot doc : snapshots) {
+                            User user = doc.toObject(User.class);
+                            userList.add(user);
+                        }
+                        adapter.notifyDataSetChanged();
+                    }
+                });
     }
 
     @Override
