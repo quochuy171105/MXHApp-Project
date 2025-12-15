@@ -1,23 +1,18 @@
 package huynguyen.com.MXHApp;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.HashMap;
-import java.util.Map;
+import com.google.firebase.auth.FirebaseAuth;
 
 import huynguyen.com.MXHApp.databinding.ActivityAccountStatusBinding;
 
 public class AccountStatusActivity extends AppCompatActivity {
 
     private ActivityAccountStatusBinding binding;
-    private String userId;
-    private FirebaseFirestore firestore;
+    private FirebaseAuth auth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,14 +20,17 @@ public class AccountStatusActivity extends AppCompatActivity {
         binding = ActivityAccountStatusBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // TODO: Get userId from intent
+        auth = FirebaseAuth.getInstance();
 
-        // TODO: Initialize Firestore
+        String reason = getIntent().getStringExtra("reason");
+        binding.reasonTextView.setText(reason);
 
-        // TODO: Set up click listeners for block and unblock buttons
-    }
-
-    private void updateUserStatus(String status, String reason) {
-        // TODO: Implement logic to update user status in Firestore
+        binding.logoutButton.setOnClickListener(v -> {
+            auth.signOut();
+            Intent intent = new Intent(AccountStatusActivity.this, Login.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+        });
     }
 }
