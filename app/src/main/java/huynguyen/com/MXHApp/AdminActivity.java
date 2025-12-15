@@ -37,26 +37,55 @@ public class AdminActivity extends AppCompatActivity {
         binding = ActivityAdminBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // TODO: Initialize Firebase instances and set up Toolbar
+        auth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
 
-        // TODO: Set up RecyclerView
+        setSupportActionBar(binding.toolbarAdmin);
 
-        // TODO: Load users from Firestore
+        binding.recyclerViewUsers.setHasFixedSize(true);
+        binding.recyclerViewUsers.setLayoutManager(new LinearLayoutManager(this));
+
+        userList = new ArrayList<>();
+        adapter = new AdminUserAdapter(this, userList);
+        binding.recyclerViewUsers.setAdapter(adapter);
+
+        loadUsers();
     }
 
     private void loadUsers() {
-        // TODO: Implement Firestore snapshot listener to load users
+        firestore.collection("users").addSnapshotListener((snapshots, error) -> {
+            if (error != null) {
+                Log.w(TAG, "Listen failed.", error);
+                return;
+            }
+
+            if (snapshots != null) {
+                userList.clear();
+                for (QueryDocumentSnapshot doc : snapshots) {
+                    User user = doc.toObject(User.class);
+                    userList.add(user);
+                }
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // TODO: Inflate the admin menu
-        return super.onCreateOptionsMenu(menu);
+        getMenuInflater().inflate(R.menu.admin_menu, menu);
+        return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        // TODO: Handle menu item clicks, e.g., logout
+        if (item.getItemId() == R.id.admin_logout) {
+            auth.signOut();
+            Intent intent = new Intent(AdminActivity.this, Login.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 }
