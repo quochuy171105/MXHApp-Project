@@ -26,12 +26,18 @@ public class ShowList extends AppCompatActivity {
 
     private static final String TAG = "ShowListActivity";
 
-    // TODO: Declare UI elements and other variables
-    private RecyclerView recyclerView;
-    private ShowAdapter adapter;
-    private List<User> userList;
-    private String id;
-    private String title;
+    String id;
+    String title;
+    TextView title_tv;
+
+    Toolbar toolbar;
+    ImageView backButton;
+
+    RecyclerView recyclerView;
+    ShowAdapter adapter;
+    List<User> userList; // Changed to List<User>
+
+    FirebaseFirestore firestore;
     private ListenerRegistration listener;
 
     @Override
@@ -39,27 +45,85 @@ public class ShowList extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_list);
 
-        // TODO: Get id and title from intent
+        title_tv = findViewById(R.id.title);
+        backButton = findViewById(R.id.back_button);
+        toolbar = findViewById(R.id.toolbar);
 
-        // TODO: Initialize views and set up Toolbar
+        Intent intent = getIntent();
+        id = intent.getStringExtra("id");
+        title = intent.getStringExtra("title");
 
-        // TODO: Set up RecyclerView
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        backButton.setOnClickListener(v -> finish());
+        title_tv.setText(title);
 
-        // TODO: Call method to load the list of users
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+
+        userList = new ArrayList<>();
+        adapter = new ShowAdapter(this, userList); // Use the new constructor
+        recyclerView.setAdapter(adapter);
+
+        firestore = FirebaseFirestore.getInstance();
+
+        getList();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // TODO: Remove Firestore listener to avoid memory leaks
+        if (listener != null) {
+            listener.remove();
+        }
     }
 
     private void getList() {
-        // TODO: Determine whether to fetch "followers" or "following"
-        // TODO: Add a Firestore snapshot listener to get the list of user IDs
+        if (id == null || title == null) return;
+
+        String collectionPath = title.equalsIgnoreCase("Followers") ? "followers" : "following";
+        CollectionReference listRef = firestore.collection("users").document(id).collection(collectionPath);
+
+        listener = listRef.addSnapshotListener((snapshots, error) -> {
+            if (error != null) {
+                Log.w(TAG, "Listen failed.", error);
+                return;
+            }
+            List<String> ids = new ArrayList<>();
+            if(snapshots != null){
+                for (QueryDocumentSnapshot doc : snapshots) {
+                    ids.add(doc.getId());
+                }
+            }
+            if (!ids.isEmpty()) {
+                showUsers(ids);
+            } else {
+                userList.clear();
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     private void showUsers(List<String> userIds) {
-        // TODO: Query the "users" collection to get User objects from the list of IDs
+        // Firestore allows a maximum of 10 items in a single 'in' query.
+        // If the list can be larger, this needs pagination or multiple queries.
+        if(userIds.size() > 10){
+            Log.w(TAG, "User list size is greater than 10, this query might fail or be incomplete.");
+            // Handle this case, for example by querying 10 by 10.
+        }
+
+        firestore.collection("users").whereIn("user_id", userIds).get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    userList.clear();
+                    for(QueryDocumentSnapshot doc : queryDocumentSnapshots){
+                        User user = doc.toObject(User.class);
+                        userList.add(user);
+                    }
+                    adapter.notifyDataSetChanged();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error fetching user details", e);
+                });
     }
 }
