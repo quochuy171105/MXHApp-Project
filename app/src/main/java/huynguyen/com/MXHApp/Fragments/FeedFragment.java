@@ -15,20 +15,16 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import huynguyen.com.MXHApp.Adapter.PostAdapter;
 import huynguyen.com.MXHApp.HomeActivity;
-import huynguyen.com.MXHApp.Model.PostItem;
 import huynguyen.com.MXHApp.Model.Posts;
-import huynguyen.com.MXHApp.Model.User;
 import huynguyen.com.MXHApp.NotificationActivity;
 import huynguyen.com.MXHApp.PostActivity;
 import huynguyen.com.MXHApp.R;
@@ -43,7 +39,8 @@ public class FeedFragment extends Fragment {
 
     private FragmentFeedBinding binding;
     private PostAdapter postAdapter;
-    private List<PostItem> postItemList;
+    // REFACTORED: Changed from List<PostItem> to List<Posts>
+    private List<Posts> postList;
 
     private FirebaseFirestore firestore;
     private FirebaseUser firebaseUser;
@@ -55,8 +52,9 @@ public class FeedFragment extends Fragment {
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        postItemList = new ArrayList<>();
-        postAdapter = new PostAdapter(getContext(), postItemList);
+        // REFACTORED: Initialize with the new data type
+        postList = new ArrayList<>();
+        postAdapter = new PostAdapter(getContext(), postList);
         binding.recyclerView.setAdapter(postAdapter);
 
         firestore = FirebaseFirestore.getInstance();
@@ -117,99 +115,31 @@ public class FeedFragment extends Fragment {
                 });
     }
 
+    // REFACTORED: Simplified loadPosts logic
     private void loadPosts() {
         if (getActivity() == null) return;
 
         firestore.collection("posts")
                 .orderBy("timestamp", Query.Direction.DESCENDING)
                 .limit(20)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (getActivity() == null || binding == null) return;
-                    postItemList.clear();
-                    List<CompletableFuture<PostItem>> futures = new ArrayList<>();
-
-                    for (QueryDocumentSnapshot postSnapshot : queryDocumentSnapshots) {
-                        Posts post = postSnapshot.toObject(Posts.class);
-                        if (post.getPublisher() == null) continue;
-
-                        CompletableFuture<PostItem> future = fetchPostDetails(post);
-                        futures.add(future);
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null) {
+                        Log.e(TAG, "Error fetching posts", error);
+                        return;
                     }
-
-                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                            .thenRun(() -> {
-                                if (getActivity() == null) return;
-                                getActivity().runOnUiThread(() -> {
-                                    postItemList.clear();
-                                    for(CompletableFuture<PostItem> f : futures) {
-                                        try {
-                                            postItemList.add(f.get());
-                                        } catch (Exception e) {
-                                            Log.e(TAG, "Error getting post item from future", e);
-                                        }
-                                    }
-                                    postAdapter.notifyDataSetChanged();
-                                });
-                            });
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "Error fetching posts", e));
-    }
-
-    private CompletableFuture<PostItem> fetchPostDetails(Posts post) {
-        CompletableFuture<PostItem> future = new CompletableFuture<>();
-        CompletableFuture<User> userFuture = new CompletableFuture<>();
-        firestore.collection("users").document(post.getPublisher()).get().addOnSuccessListener(userDoc -> {
-            userFuture.complete(userDoc.toObject(User.class));
-        }).addOnFailureListener(userFuture::completeExceptionally);
-
-        CompletableFuture<Long> likeCountFuture = new CompletableFuture<>();
-        CompletableFuture<Boolean> isLikedFuture = new CompletableFuture<>();
-        firestore.collection("posts").document(post.getPostid()).collection("likes").get().addOnSuccessListener(likes -> {
-            likeCountFuture.complete((long) likes.size());
-            boolean liked = false;
-            if (firebaseUser != null) {
-                for (DocumentSnapshot doc : likes) {
-                    if (doc.getId().equals(firebaseUser.getUid())) {
-                        liked = true;
-                        break;
+                    if (getActivity() == null || binding == null || snapshots == null) return;
+                    
+                    postList.clear();
+                    for (QueryDocumentSnapshot doc : snapshots) {
+                        Posts post = doc.toObject(Posts.class);
+                        if (post.getPublisher() != null) {
+                            postList.add(post);
+                        }
                     }
-                }
-            }
-            isLikedFuture.complete(liked);
-        }).addOnFailureListener(e -> {
-            likeCountFuture.completeExceptionally(e);
-            isLikedFuture.completeExceptionally(e);
-        });
-
-        CompletableFuture<Long> commentCountFuture = new CompletableFuture<>();
-        firestore.collection("posts").document(post.getPostid()).collection("comments").get().addOnSuccessListener(comments -> {
-            commentCountFuture.complete((long) comments.size());
-        }).addOnFailureListener(commentCountFuture::completeExceptionally);
-
-        CompletableFuture<Boolean> isSavedFuture = new CompletableFuture<>();
-        if (firebaseUser != null) {
-            firestore.collection("users").document(firebaseUser.getUid()).collection("saved_posts").document(post.getPostid()).get().addOnSuccessListener(doc -> {
-                isSavedFuture.complete(doc.exists());
-            }).addOnFailureListener(isSavedFuture::completeExceptionally);
-        } else {
-            isSavedFuture.complete(false);
-        }
-
-        CompletableFuture.allOf(userFuture, likeCountFuture, isLikedFuture, commentCountFuture, isSavedFuture)
-                .thenRun(() -> {
-                    try {
-                        User user = userFuture.get();
-                        long likeCount = likeCountFuture.get();
-                        boolean isLiked = isLikedFuture.get();
-                        long commentCount = commentCountFuture.get();
-                        boolean isSaved = isSavedFuture.get();
-                        future.complete(new PostItem(post, user, likeCount, commentCount, isLiked, isSaved));
-                    } catch (Exception e) {
-                        future.completeExceptionally(e);
-                    }
+                    postAdapter.notifyDataSetChanged();
                 });
-
-        return future;
     }
+    
+    // REMOVED: The complex fetchPostDetails method is no longer needed here.
+    // Its logic will be moved into the PostAdapter.
 }

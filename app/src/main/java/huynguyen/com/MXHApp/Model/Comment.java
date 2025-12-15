@@ -1,14 +1,16 @@
 package huynguyen.com.MXHApp.Model;
 
 public class Comment {
-    String comment;
-    String publisher;
-    String time;
+    private String comment;
+    private String publisher;
+    private String time;
+    private String commentid; // ADDED: Field for the comment's unique ID
 
-    public Comment(String comment, String publisher, String time) {
+    public Comment(String comment, String publisher, String time, String commentid) {
         this.comment = comment;
         this.publisher = publisher;
         this.time = time;
+        this.commentid = commentid;
     }
 
     public Comment()
@@ -38,5 +40,14 @@ public class Comment {
 
     public void setTime(String time) {
         this.time = time;
+    }
+
+    // ADDED: Getter and Setter for commentid
+    public String getCommentid() {
+        return commentid;
+    }
+
+    public void setCommentid(String commentid) {
+        this.commentid = commentid;
     }
 }
