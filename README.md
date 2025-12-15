@@ -6,9 +6,9 @@
 
 *(Bạn có thể chèn ảnh chụp màn hình hoặc GIF demo các chức năng của ứng dụng tại đây)*
 
-| Trang Đăng nhập | Trang Feed |         ![img.png](img.png)         |
-| :---: | :---: |:----------------:|
-| *(Ảnh màn hình)* | *(Ảnh màn hình)* | *(Ảnh màn hình)* |
+| Trang Đăng nhập | Trang Feed | Trang Profile |
+| :---: | :---: | :---: |
+| *![img_2.png](img_2.png)* | *![img_1.png](img_1.png)* | *![img.png](img.png)* |
 
 ## Tính năng chính
 
