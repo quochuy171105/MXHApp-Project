@@ -13,7 +13,7 @@
         android:layout_centerInParent="true"
         android:fontFamily="@font/bungee_shade"
         android:gravity="center"
-        android:text="Memer"
+        android:text="Chạm"
         android:textColor="?attr/colorPrimary"
         android:textAppearance="@style/TextAppearance.Material3.DisplayLarge" />
 

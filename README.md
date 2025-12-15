@@ -1,6 +1,6 @@
-# MXHApp - Ứng dụng Mạng xã hội Android
+# Chạm - Ứng dụng Mạng xã hội Android
 
-Đây là một dự án ứng dụng mạng xã hội (MXH) dành cho nền tảng Android, được xây dựng bằng Java. Ứng dụng mô phỏng các tính năng cơ bản của một mạng xã hội hình ảnh tương tự Instagram, sử dụng Firebase làm backend để quản lý dữ liệu và người dùng.
+Đây là một dự án ứng dụng mạng xã hội (MXH) dành cho nền tảng Android, được xây dựng bằng Java. Ứng dụng có tên là **Chạm**, mô phỏng các tính năng cơ bản của một mạng xã hội hình ảnh, sử dụng Firebase làm backend để quản lý dữ liệu và người dùng.
 
 ## Demo
 
