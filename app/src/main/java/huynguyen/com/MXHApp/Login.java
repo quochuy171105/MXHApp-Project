@@ -2,6 +2,7 @@ package huynguyen.com.MXHApp;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -21,6 +22,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import huynguyen.com.MXHApp.databinding.ActivityLoginBinding;
@@ -41,40 +43,142 @@ public class Login extends AppCompatActivity {
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // TODO: Initialize Firebase Auth and Firestore
+        auth = FirebaseAuth.getInstance();
+        firestore = FirebaseFirestore.getInstance();
 
-        // TODO: Configure Google Sign In
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // TODO: Set up click listeners for login, Google sign-in, and sign-up navigation
+        binding.login.setOnClickListener(v -> loginUser());
+        binding.signIn.setOnClickListener(v -> signInWithGoogle());
+        binding.goToSignUp.setOnClickListener(v -> {
+            startActivity(new Intent(Login.this, MainActivity.class));
+            finish();
+        });
     }
 
     private void loginUser() {
-        // TODO: Get email and password, then perform Firebase email/password sign-in
+        String email = binding.email.getText().toString();
+        String password = binding.password.getText().toString();
+
+        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
+            Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        checkUserRoleAndRedirect(task.getResult().getUser());
+                    } else {
+                        Toast.makeText(Login.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void signInWithGoogle() {
-        // TODO: Start the Google Sign-In intent
+        // Sign out first to ensure the account chooser always appears.
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            startActivityForResult(signInIntent, RC_SIGN_IN);
+        });
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        // TODO: Handle the result from Google Sign-In intent
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                if (account != null) {
+                    firebaseAuthWithGoogle(account);
+                }
+            } catch (ApiException e) {
+                Log.w(TAG, "Google sign in failed", e);
+            }
+        }
     }
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
-        // TODO: Exchange Google account for a Firebase credential and sign in
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        auth.signInWithCredential(credential)
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = auth.getCurrentUser();
+                        checkIfNewGoogleUser(user);
+                    } else {
+                        Toast.makeText(Login.this, "Authentication Failed.", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void checkIfNewGoogleUser(FirebaseUser user) {
-        // TODO: Check if the Google user is new and create a profile if so
+        if (user == null) return;
+        DocumentReference userRef = firestore.collection("users").document(user.getUid());
+        userRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                checkUserRoleAndRedirect(user);
+            } else {
+                createNewGoogleUser(user);
+            }
+        });
     }
 
     private void createNewGoogleUser(FirebaseUser user) {
-        // TODO: Create a new user document in Firestore
+        Map<String, Object> map = new HashMap<>();
+        String displayName = user.getDisplayName() != null ? user.getDisplayName() : "";
+        map.put("username", displayName.toLowerCase(Locale.ROOT));
+        map.put("email", user.getEmail());
+        map.put("memer", displayName);
+        map.put("user_id", user.getUid());
+        map.put("profileUrl", user.getPhotoUrl() != null ? user.getPhotoUrl().toString() : "");
+        map.put("background", "");
+        map.put("accountStatus", "active");
+        map.put("statusReason", "");
+        map.put("role", "user"); // <-- Added this line to set default role
+
+        firestore.collection("users").document(user.getUid()).set(map).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                checkUserRoleAndRedirect(user);
+            } else {
+                Toast.makeText(this, "Failed to create user profile.", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void checkUserRoleAndRedirect(FirebaseUser user) {
-        // TODO: Check user's role and account status, then redirect accordingly
+        if (user == null) return;
+        DocumentReference docRef = firestore.collection("users").document(user.getUid());
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && task.getResult().exists()) {
+                String role = task.getResult().getString("role");
+                String accountStatus = task.getResult().getString("accountStatus");
+
+                if ("blocked".equals(accountStatus)) {
+                    String reason = task.getResult().getString("statusReason");
+                    Toast.makeText(Login.this, "Account blocked: " + reason, Toast.LENGTH_LONG).show();
+                    auth.signOut();
+                    return;
+                }
+
+                Intent intent;
+                if ("admin".equals(role)) {
+                    intent = new Intent(Login.this, AdminActivity.class);
+                } else {
+                    intent = new Intent(Login.this, HomeActivity.class);
+                }
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();
+            } else {
+                // Handle case where user is authenticated but has no data in Firestore
+                Toast.makeText(Login.this, "User data not found. Please contact support.", Toast.LENGTH_LONG).show();
+                auth.signOut(); // Sign out the user to prevent inconsistent state
+            }
+        });
     }
 }
