@@ -5,41 +5,36 @@
     android:id="@+id/mobile_navigation"
     app:startDestination="@id/feed">
 
-    <!-- FIX: ID must match menu item ID -->
     <fragment
         android:id="@id/feed"
         android:name="huynguyen.com.MXHApp.Fragments.FeedFragment"
         android:label=""
         tools:layout="@layout/fragment_feed" />
 
-    <!-- FIX: ID must match menu item ID -->
     <fragment
         android:id="@id/following"
         android:name="huynguyen.com.MXHApp.Fragments.FollowingFragment"
         android:label=""
         tools:layout="@layout/fragment_following" />
 
-    <!-- ADDED: Chat Fragment Destination -->
     <fragment
         android:id="@id/chat"
         android:name="huynguyen.com.MXHApp.Fragments.ConversationsFragment"
         android:label=""
         tools:layout="@layout/fragment_conversations" />
 
-    <!-- FIX: ID must match menu item ID -->
     <fragment
         android:id="@id/post" 
         android:name="huynguyen.com.MXHApp.Fragments.PostPlaceholderFragment"
         android:label="" />
 
-    <!-- FIX: ID must match menu item ID -->
-    <fragment
+    <!-- FIX: Changed destination from Fragment to Activity -->
+    <activity
         android:id="@id/search"
-        android:name="huynguyen.com.MXHApp.Fragments.SearchFragment" 
+        android:name="huynguyen.com.MXHApp.SearchUsers" 
         android:label=""
-        tools:layout="@layout/fragment_search_users" />
+        tools:layout="@layout/activity_search_users" />
 
-    <!-- FIX: ID must match menu item ID -->
     <fragment
         android:id="@id/profile"
         android:name="huynguyen.com.MXHApp.Fragments.UserFragment"
