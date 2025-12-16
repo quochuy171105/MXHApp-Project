@@ -42,22 +42,22 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final Notifications notification = mNotifications.get(position);
 
-        holder.binding.comment.setText(notification.getComment());
-        getUserInfo(holder);
+        // FIX: Use new getter methods
+        holder.binding.comment.setText(notification.getText());
+        getUserInfo(holder, notification.getUserId());
 
-        // REFACTORED: Use the new standard getter isPost()
         if (notification.isPost()) {
             holder.binding.postImage.setVisibility(View.VISIBLE);
-            getPostImage(holder);
+            getPostImage(holder, notification.getPostId());
         } else {
             holder.binding.postImage.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> {
-            // REFACTORED: Use the new standard getter isPost()
             if (notification.isPost()) {
                 Intent intent = new Intent(mContext, PostDetails.class);
-                intent.putExtra("postid", notification.getPostid());
+                // FIX: Use new getter methods
+                intent.putExtra("postid", notification.getPostId());
                 mContext.startActivity(intent);
             } else {
                 // Handle click on follow notification if needed
@@ -79,9 +79,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         }
     }
 
-    private void getUserInfo(final ViewHolder holder) {
-        String userid = mNotifications.get(holder.getAdapterPosition()).getUserid();
-        FirebaseFirestore.getInstance().collection("users").document(userid).get().addOnCompleteListener(task -> {
+    private void getUserInfo(final ViewHolder holder, String userId) {
+        // FIX: Check for null and use passed argument
+        if (userId == null) return;
+        FirebaseFirestore.getInstance().collection("users").document(userId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 User user = task.getResult().toObject(User.class);
                 if (user != null && mContext != null) {
@@ -92,9 +93,10 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         });
     }
 
-    private void getPostImage(final ViewHolder holder) {
-        String postid = mNotifications.get(holder.getAdapterPosition()).getPostid();
-        FirebaseFirestore.getInstance().collection("posts").document(postid).get().addOnCompleteListener(task -> {
+    private void getPostImage(final ViewHolder holder, String postId) {
+        // FIX: Check for null and use passed argument
+        if (postId == null) return;
+        FirebaseFirestore.getInstance().collection("posts").document(postId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Posts post = task.getResult().toObject(Posts.class);
                 if (post != null && mContext != null) {

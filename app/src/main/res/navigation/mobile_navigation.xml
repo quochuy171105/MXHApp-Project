@@ -19,6 +19,13 @@
         android:label=""
         tools:layout="@layout/fragment_following" />
 
+    <!-- ADDED: Chat Fragment Destination -->
+    <fragment
+        android:id="@id/chat"
+        android:name="huynguyen.com.MXHApp.Fragments.ConversationsFragment"
+        android:label=""
+        tools:layout="@layout/fragment_conversations" />
+
     <!-- FIX: ID must match menu item ID -->
     <fragment
         android:id="@id/post" 

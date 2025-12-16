@@ -23,6 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import huynguyen.com.MXHApp.Model.Comment;
 import huynguyen.com.MXHApp.Model.User;
@@ -89,7 +90,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         // --- Delete Comment Logic ---
         holder.itemView.setOnLongClickListener(v -> {
             if (firebaseUser != null && comment.getPublisher() != null) {
-                if (comment.getPublisher().equals(firebaseUser.getUid()) || postPublisherId.equals(firebaseUser.getUid())) {
+                if (comment.getPublisher().equals(firebaseUser.getUid()) || (postPublisherId != null && postPublisherId.equals(firebaseUser.getUid()))) {
                     showDeleteDialog(comment);
                     return true;
                 }
@@ -161,23 +162,28 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             likeRef.set(map);
 
             if (!comment.getPublisher().equals(firebaseUser.getUid())) {
-                addLikeNotification(comment.getPublisher(), postId, comment.getComment());
+                addCommentLikeNotification(comment.getPublisher(), postId, comment.getComment());
             }
         } else {
             likeRef.delete();
         }
     }
 
-    private void addLikeNotification(String commentPublisherId, String postId, String commentText) {
+    // FIX: Use the new, standardized notification format
+    private void addCommentLikeNotification(String commentPublisherId, String postId, String commentText) {
         if (firebaseUser == null || commentPublisherId == null || postId == null) return;
+
         String notificationText = "liked your comment: " + (commentText.length() > 20 ? commentText.substring(0, 20) + "..." : commentText);
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("userid", firebaseUser.getUid());
-        map.put("comment", notificationText);
-        map.put("postid", postId);
-        // REFACTORED: Changed field name for better deserialization
-        map.put("post", true);
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId", firebaseUser.getUid());
+        map.put("text", notificationText);
+        map.put("postId", postId);
+        map.put("isPost", true);
+        map.put("isRead", false);
+        map.put("receiver", commentPublisherId);
         map.put("timestamp", FieldValue.serverTimestamp());
+
         firestore.collection("users").document(commentPublisherId).collection("notifications").add(map);
     }
 

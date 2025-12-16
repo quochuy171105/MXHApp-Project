@@ -11,6 +11,12 @@
         android:id="@+id/feed"
         android:icon="@drawable/ic_feed"/>
 
+    <!-- ADDED: Chat item -->
+    <item
+        android:id="@+id/chat"
+        android:icon="@android:drawable/ic_dialog_email"
+        android:title="Chat" />
+
     <item
         android:title="Profile"
         android:id="@+id/profile"

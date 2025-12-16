@@ -69,13 +69,13 @@ public class OthersProfile extends AppCompatActivity {
         setupRecyclerView();
         setupClickListeners();
 
+        // Hide buttons if viewing own profile, otherwise show them
         if (profileId.equals(user.getUid())) {
-            // This case should ideally redirect to UserFragment, but for now, we show an edit button
-            binding.btnFollow.setText("Edit Profile");
-            binding.btnFollowing.setVisibility(View.GONE);
-            binding.btnFollow.setVisibility(View.VISIBLE);
+            binding.btnFollowAction.setVisibility(View.GONE);
+            binding.btnMessage.setVisibility(View.GONE);
         } else {
-            checkFollowStatus();
+            binding.btnFollowAction.setVisibility(View.VISIBLE);
+            binding.btnMessage.setVisibility(View.VISIBLE);
         }
     }
 
@@ -110,52 +110,47 @@ public class OthersProfile extends AppCompatActivity {
         binding.followersLayout.setOnClickListener(v -> openShowList("followers"));
         binding.followingLayout.setOnClickListener(v -> openShowList("following"));
 
-        binding.btnFollow.setOnClickListener(v -> {
-            if (binding.btnFollow.getText().toString().equalsIgnoreCase("Follow")) {
+        binding.btnFollowAction.setOnClickListener(v -> {
+            String currentText = binding.btnFollowAction.getText().toString();
+            if (currentText.equalsIgnoreCase("Follow")) {
                 followUser();
+            } else if (currentText.equalsIgnoreCase("Following")) {
+                unfollowUser();
             }
         });
 
-        binding.btnFollowing.setOnClickListener(v -> {
-            if (binding.btnFollowing.getText().toString().equalsIgnoreCase("Following")) {
-                unfollowUser();
-            }
+        binding.btnMessage.setOnClickListener(v -> {
+            Intent intent = new Intent(OthersProfile.this, ChatActivity.class);
+            intent.putExtra("userId", profileId);
+            startActivity(intent);
         });
     }
 
     private void loadProfileData() {
-        removeListeners(); // Clear previous listeners
+        removeListeners(); // Clear all previous listeners first
+        
+        // Re-establish all data listeners
         getUserData();
         getFollowerCount();
         getFollowingCount();
         getPosts();
+
+        // FIX: Moved checkFollowStatus here to ensure its listener is active
+        if (!profileId.equals(user.getUid())) {
+             checkFollowStatus();
+        }
     }
 
     private void getUserData() {
         ListenerRegistration userListener = firestore.collection("users").document(profileId)
                 .addSnapshotListener((snapshot, error) -> {
-                    if (error != null) {
-                        Log.e(TAG, "Listen failed.", error);
-                        return;
-                    }
+                    if (error != null) { Log.e(TAG, "Listen failed.", error); return; }
 
                     if (snapshot != null && snapshot.exists()) {
-                        String username = snapshot.getString("username");
-                        String memer = snapshot.getString("memer");
-                        String profileUrl = snapshot.getString("profileUrl");
-                        String backgroundUrl = snapshot.getString("background");
-
-                        binding.username.setText(username);
-                        binding.memer.setText(memer);
-
-                        if (profileUrl != null && !profileUrl.isEmpty()) {
-                            Glide.with(this).load(profileUrl).placeholder(R.drawable.profile_image).into(binding.profileImage);
-                        } else {
-                            binding.profileImage.setImageResource(R.drawable.profile_image);
-                        }
-                        if (backgroundUrl != null && !backgroundUrl.isEmpty()) {
-                            Glide.with(this).load(backgroundUrl).into(binding.background);
-                        }
+                        binding.username.setText(snapshot.getString("username"));
+                        binding.memer.setText(snapshot.getString("memer"));
+                        Glide.with(this).load(snapshot.getString("profileUrl")).placeholder(R.drawable.profile_image).into(binding.profileImage);
+                        Glide.with(this).load(snapshot.getString("background")).into(binding.background);
                     } else {
                         Log.d(TAG, "User not found: " + profileId);
                     }
@@ -187,7 +182,6 @@ public class OthersProfile extends AppCompatActivity {
 
         ListenerRegistration postsListener = postsQuery.addSnapshotListener((snapshots, error) -> {
             if (error != null) return;
-
             postsList.clear();
             for (QueryDocumentSnapshot doc : snapshots) {
                 Posts post = doc.toObject(Posts.class);
@@ -204,11 +198,9 @@ public class OthersProfile extends AppCompatActivity {
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) return;
                     if (snapshot != null && snapshot.exists()) {
-                        binding.btnFollow.setVisibility(View.GONE);
-                        binding.btnFollowing.setVisibility(View.VISIBLE);
+                        binding.btnFollowAction.setText("Following");
                     } else {
-                        binding.btnFollow.setVisibility(View.VISIBLE);
-                        binding.btnFollowing.setVisibility(View.GONE);
+                        binding.btnFollowAction.setText("Follow");
                     }
                 });
         listeners.add(checkFollowListener);

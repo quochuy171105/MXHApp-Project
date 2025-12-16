@@ -16,11 +16,13 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 import huynguyen.com.MXHApp.Model.User;
@@ -45,7 +47,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.user, parent, false); // FIX: Changed to correct layout name
+        View view = LayoutInflater.from(context).inflate(R.layout.user, parent, false);
         return new ViewHolder(view);
     }
 
@@ -126,7 +128,11 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         batch.set(followingRef, new HashMap<>());
         DocumentReference followersRef = firestore.collection("users").document(userId).collection("followers").document(firebaseUser.getUid());
         batch.set(followersRef, new HashMap<>());
-        batch.commit().addOnFailureListener(e -> Log.e(TAG, "Failed to follow user", e));
+
+        batch.commit().addOnSuccessListener(aVoid -> {
+            // FIX: Add notification logic
+            addFollowNotification(userId);
+        }).addOnFailureListener(e -> Log.e(TAG, "Failed to follow user", e));
     }
 
     private void unfollowUser(String userId) {
@@ -137,5 +143,20 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         DocumentReference followersRef = firestore.collection("users").document(userId).collection("followers").document(firebaseUser.getUid());
         batch.delete(followersRef);
         batch.commit().addOnFailureListener(e -> Log.e(TAG, "Failed to unfollow user", e));
+    }
+
+    // FIX: Add notification logic
+    private void addFollowNotification(String followedUserId) {
+        if (firebaseUser == null) return;
+        Map<String, Object> notificationMap = new HashMap<>();
+        notificationMap.put("userId", firebaseUser.getUid());
+        notificationMap.put("text", "started following you");
+        notificationMap.put("postId", "");
+        notificationMap.put("isPost", false);
+        notificationMap.put("isRead", false);
+        notificationMap.put("receiver", followedUserId);
+        notificationMap.put("timestamp", FieldValue.serverTimestamp());
+
+        firestore.collection("users").document(followedUserId).collection("notifications").add(notificationMap);
     }
 }
