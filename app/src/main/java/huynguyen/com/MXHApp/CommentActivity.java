@@ -21,6 +21,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import huynguyen.com.MXHApp.Adapter.CommentAdapter;
 import huynguyen.com.MXHApp.Model.Comment;
@@ -76,7 +77,6 @@ public class CommentActivity extends AppCompatActivity {
         binding.recyclerView.setHasFixedSize(true);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         commentList = new ArrayList<>();
-        // REFACTORED: Pass the post's publisherId to the adapter
         commentAdapter = new CommentAdapter(this, commentList, postId, publisherId);
         binding.recyclerView.setAdapter(commentAdapter);
     }
@@ -105,7 +105,7 @@ public class CommentActivity extends AppCompatActivity {
         hashMap.put("timestamp", FieldValue.serverTimestamp());
 
         commentsRef.document(commentId).set(hashMap).addOnSuccessListener(aVoid -> {
-            if (!publisherId.equals(firebaseUser.getUid())) {
+            if (publisherId != null && !publisherId.equals(firebaseUser.getUid())) {
                 addNotification(commentText);
             }
             binding.addComment.setText("");
@@ -115,14 +115,17 @@ public class CommentActivity extends AppCompatActivity {
         });
     }
 
+    // FIX: Use the new, standardized notification format
     private void addNotification(String commentText) {
         if (firebaseUser == null || publisherId == null || postId == null) return;
 
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("userid", firebaseUser.getUid());
-        map.put("comment", "commented: " + commentText);
-        map.put("postid", postId);
-        map.put("ispost", true);
+        Map<String, Object> map = new HashMap<>();
+        map.put("userId", firebaseUser.getUid());
+        map.put("text", "commented: " + commentText);
+        map.put("postId", postId);
+        map.put("isPost", true);
+        map.put("isRead", false);
+        map.put("receiver", publisherId);
         map.put("timestamp", FieldValue.serverTimestamp());
 
         firestore.collection("users").document(publisherId).collection("notifications").add(map);

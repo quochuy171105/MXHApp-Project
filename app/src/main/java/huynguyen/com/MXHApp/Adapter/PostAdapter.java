@@ -20,16 +20,19 @@ import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import huynguyen.com.MXHApp.CommentActivity;
 import huynguyen.com.MXHApp.HomeActivity;
 import huynguyen.com.MXHApp.Model.Posts;
 import huynguyen.com.MXHApp.Model.User;
+import huynguyen.com.MXHApp.OthersProfile;
 import huynguyen.com.MXHApp.PostActivity;
 import huynguyen.com.MXHApp.R;
 
@@ -63,7 +66,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final Posts post = mPosts.get(position);
 
-        // --- 1. Set basic info ---
         Glide.with(mContext).load(post.getPostImage()).into(holder.postImage);
         if (post.getDescription() != null && !post.getDescription().isEmpty()) {
             holder.description.setText(post.getDescription());
@@ -78,15 +80,14 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             holder.postTime.setText("");
         }
 
-        // --- 2. Fetch related data ---
         publisherInfo(holder.profileImage, holder.username, post.getPublisher());
         nrLikes(holder.likesCount, post.getPostid());
         getComments(holder.commentsCount, post.getPostid());
         isLiked(post.getPostid(), holder.like);
         isSaved(post.getPostid(), holder.save);
 
-        // --- 3. Click Listeners ---
-        holder.like.setOnClickListener(v -> toggleLike(post.getPostid(), holder.like));
+        // FIX: Pass publisherId to toggleLike
+        holder.like.setOnClickListener(v -> toggleLike(post.getPostid(), post.getPublisher(), holder.like));
         holder.save.setOnClickListener(v -> toggleSave(post.getPostid(), holder.save));
 
         View.OnClickListener commentClickListener = v -> {
@@ -98,11 +99,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         holder.comment.setOnClickListener(commentClickListener);
         holder.commentsCount.setOnClickListener(commentClickListener);
 
-        // REFACTORED: The click listener now calls the improved openProfile method
         holder.profileImage.setOnClickListener(v -> openProfile(post.getPublisher()));
         holder.username.setOnClickListener(v -> openProfile(post.getPublisher()));
 
-        // --- 4. Post Options (Edit/Delete) ---
         if (firebaseUser != null && post.getPublisher().equals(firebaseUser.getUid())) {
             holder.more.setVisibility(View.VISIBLE);
             holder.more.setOnClickListener(v -> showPostOptionsDialog(post));
@@ -116,12 +115,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         return mPosts.size();
     }
 
-    // --- ViewHolder and Data Fetching Methods ---
-
     public static class ViewHolder extends RecyclerView.ViewHolder {
         public ImageView profileImage, postImage, like, comment, save, more;
         public TextView username, likesCount, publisher, description, commentsCount, postTime;
-
         ListenerRegistration likesListener, commentsListener, savedListener, userListener, isLikedListener;
 
         public ViewHolder(@NonNull View itemView) {
@@ -165,6 +161,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     private void nrLikes(TextView likes, String postid) {
+        if (postid == null) return;
         firestore.collection("posts").document(postid).collection("likes").addSnapshotListener((snapshots, e) -> {
             if (e != null) { Log.e(TAG, "Listen failed.", e); return; }
             if (snapshots != null) {
@@ -174,6 +171,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     private void getComments(TextView comments, String postid) {
+        if (postid == null) return;
         firestore.collection("posts").document(postid).collection("comments").addSnapshotListener((snapshots, e) -> {
             if (e != null) { Log.e(TAG, "Listen failed.", e); return; }
             if (snapshots != null) {
@@ -183,7 +181,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     private void isLiked(String postid, ImageView imageView) {
-        if (firebaseUser == null) return;
+        if (firebaseUser == null || postid == null) return;
         firestore.collection("posts").document(postid).collection("likes").document(firebaseUser.getUid())
             .addSnapshotListener((snapshot, e) -> {
                 if (e != null) { Log.e(TAG, "Listen failed.", e); return; }
@@ -198,7 +196,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
     }
 
     private void isSaved(String postid, ImageView imageView) {
-        if (firebaseUser == null) return;
+        if (firebaseUser == null || postid == null) return;
         firestore.collection("users").document(firebaseUser.getUid()).collection("saved_posts").document(postid)
             .addSnapshotListener((snapshot, e) -> {
                 if (e != null) { Log.e(TAG, "Listen failed.", e); return; }
@@ -212,18 +210,38 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
             });
     }
 
-    private void toggleLike(String postid, ImageView imageView) {
+    // FIX: Add publisherId to create notification
+    private void toggleLike(String postid, String publisherId, ImageView imageView) {
         if (firebaseUser == null) return;
         DocumentReference likeRef = firestore.collection("posts").document(postid).collection("likes").document(firebaseUser.getUid());
         if (imageView.getTag().equals("like")) {
             likeRef.set(new HashMap<>());
+            // Add notification
+            addLikeNotification(publisherId, postid);
         } else {
             likeRef.delete();
         }
     }
 
+    // FIX: Add notification logic
+    private void addLikeNotification(String publisherId, String postid) {
+        if (firebaseUser == null || publisherId == null || publisherId.equals(firebaseUser.getUid())) {
+            return; // Don't notify for your own post
+        }
+        Map<String, Object> notificationMap = new HashMap<>();
+        notificationMap.put("userId", firebaseUser.getUid());
+        notificationMap.put("text", "liked your post");
+        notificationMap.put("postId", postid);
+        notificationMap.put("isPost", true);
+        notificationMap.put("isRead", false);
+        notificationMap.put("receiver", publisherId);
+        notificationMap.put("timestamp", FieldValue.serverTimestamp());
+
+        firestore.collection("users").document(publisherId).collection("notifications").add(notificationMap);
+    }
+
     private void toggleSave(String postid, ImageView imageView) {
-        if (firebaseUser == null) return;
+        if (firebaseUser == null || postid == null) return;
         DocumentReference saveRef = firestore.collection("users").document(firebaseUser.getUid()).collection("saved_posts").document(postid);
         if (imageView.getTag().equals("save")) {
             saveRef.set(new HashMap<>());
@@ -232,23 +250,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         }
     }
 
-    // REFACTORED: This method now also triggers navigation
     private void openProfile(String userId) {
-        if (mContext == null || userId == null) return;
-        
-        // 1. Save the target profile ID
-        SharedPreferences.Editor editor = mContext.getSharedPreferences("PREFS", MODE_PRIVATE).edit();
-        editor.putString("profileid", userId);
-        editor.apply();
+        if (mContext == null || userId == null || firebaseUser == null) return;
 
-        // 2. Trigger navigation
-        if (mContext instanceof HomeActivity) {
-            // If we are in a fragment hosted by HomeActivity, we can switch tabs directly.
-            ((HomeActivity) mContext).getBinding().bottomNav.setSelectedItemId(R.id.profile);
+        if (userId.equals(firebaseUser.getUid())) {
+            if (mContext instanceof HomeActivity) {
+                ((HomeActivity) mContext).getBinding().bottomNav.setSelectedItemId(R.id.profile);
+            }
         } else {
-            // If we are in another activity (e.g., PostDetails), start HomeActivity fresh.
-            Intent intent = new Intent(mContext, HomeActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            Intent intent = new Intent(mContext, OthersProfile.class);
+            intent.putExtra("uid", userId);
             mContext.startActivity(intent);
         }
     }
@@ -258,12 +269,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.ViewHolder> {
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         builder.setItems(options, (dialog, which) -> {
             if (which == 0) {
-                // Edit
                 Intent intent = new Intent(mContext, PostActivity.class);
                 intent.putExtra("postIdToEdit", post.getPostid());
                 mContext.startActivity(intent);
             } else if (which == 1) {
-                // Delete
                 new AlertDialog.Builder(mContext)
                     .setTitle("Delete Post")
                     .setMessage("Are you sure you want to delete this post?")
