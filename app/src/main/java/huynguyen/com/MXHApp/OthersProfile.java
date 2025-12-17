@@ -74,8 +74,10 @@ public class OthersProfile extends AppCompatActivity {
             binding.btnFollow.setText("Edit Profile");
             binding.btnFollowing.setVisibility(View.GONE);
             binding.btnFollow.setVisibility(View.VISIBLE);
+            binding.btnMessage.setVisibility(View.GONE);
         } else {
             checkFollowStatus();
+            binding.btnMessage.setVisibility(View.VISIBLE);
         }
     }
 
@@ -120,6 +122,12 @@ public class OthersProfile extends AppCompatActivity {
             if (binding.btnFollowing.getText().toString().equalsIgnoreCase("Following")) {
                 unfollowUser();
             }
+        });
+
+        binding.btnMessage.setOnClickListener(v -> {
+            Intent intent = new Intent(OthersProfile.this, MessageActivity.class);
+            intent.putExtra("userid", profileId);
+            startActivity(intent);
         });
     }
 
