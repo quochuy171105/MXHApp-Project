@@ -18,7 +18,7 @@
         tools:layout="@layout/fragment_following" />
 
     <fragment
-        android:id="@id/chat"
+        android:id="@id/search"
         android:name="huynguyen.com.MXHApp.Fragments.ConversationsFragment"
         android:label=""
         tools:layout="@layout/fragment_conversations" />
