@@ -1,13 +1,15 @@
 package huynguyen.com.MXHApp.Model;
 
+import com.google.firebase.database.PropertyName;
+
 public class Conversation {
     private String id;
     private String username;
     private String profileUrl;
     private String lastMessage;
     private long timestamp;
-    private boolean isSeen; // ADDED
-    private String lastMessageSenderId; // ADDED
+    private boolean seen;
+    private String lastMessageSenderId;
 
     public Conversation() {
     }
@@ -33,11 +35,12 @@ public class Conversation {
         return timestamp;
     }
 
-    public boolean isSeen() { // ADDED
-        return isSeen;
+    @PropertyName("seen") // MODIFIED: to match the database field name
+    public boolean isSeen() {
+        return seen;
     }
 
-    public String getLastMessageSenderId() { // ADDED
+    public String getLastMessageSenderId() {
         return lastMessageSenderId;
     }
 
@@ -62,11 +65,12 @@ public class Conversation {
         this.timestamp = timestamp;
     }
 
-    public void setSeen(boolean seen) { // ADDED
-        isSeen = seen;
+    @PropertyName("seen") // MODIFIED: to match the database field name
+    public void setSeen(boolean seen) {
+        this.seen = seen;
     }
 
-    public void setLastMessageSenderId(String lastMessageSenderId) { // ADDED
+    public void setLastMessageSenderId(String lastMessageSenderId) {
         this.lastMessageSenderId = lastMessageSenderId;
     }
 }

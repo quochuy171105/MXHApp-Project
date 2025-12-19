@@ -54,7 +54,7 @@ public class ShowAdapter extends RecyclerView.Adapter<ShowAdapter.ViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final User user = userList.get(position);
-        if (user == null || user.getUser_id() == null) return;
+        if (user == null || user.getUserId() == null) return;
 
         holder.username.setText(user.getUsername());
         holder.memer.setText(user.getMemer());
@@ -66,24 +66,24 @@ public class ShowAdapter extends RecyclerView.Adapter<ShowAdapter.ViewHolder> {
         }
 
         // Hide follow buttons if it's the current user
-        if (firebaseUser != null && user.getUser_id().equals(firebaseUser.getUid())) {
+        if (firebaseUser != null && user.getUserId().equals(firebaseUser.getUid())) {
             holder.btn_follow.setVisibility(View.GONE);
         } else {
             holder.btn_follow.setVisibility(View.VISIBLE);
-            isFollowing(user.getUser_id(), holder.btn_follow);
+            isFollowing(user.getUserId(), holder.btn_follow);
         }
 
         holder.btn_follow.setOnClickListener(v -> {
             if(holder.btn_follow.getText().toString().equalsIgnoreCase("Follow")){
-                followUser(user.getUser_id());
+                followUser(user.getUserId());
             } else {
-                unfollowUser(user.getUser_id());
+                unfollowUser(user.getUserId());
             }
         });
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, OthersProfile.class);
-            intent.putExtra("uid", user.getUser_id());
+            intent.putExtra("uid", user.getUserId());
             context.startActivity(intent);
         });
     }

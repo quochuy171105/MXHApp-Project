@@ -24,17 +24,31 @@
         android:textColor="?android:attr/textColorSecondary"
         android:text="10:45 AM"/>
 
+    <!-- Text Message -->
     <TextView
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/message_timestamp"
-        android:layout_toEndOf="@id/profile_image"
+        android:layout_toEndOf="@+id/profile_image"
         android:layout_marginStart="8dp"
         android:layout_marginTop="2dp"
         android:padding="12dp"
         android:text="This is a received message"
         android:background="@drawable/background_left"
         android:textAppearance="?attr/textAppearanceBodyLarge"/>
+        
+    <!-- ADDED: Image Message -->
+    <ImageView
+        android:id="@+id/message_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_below="@id/message_timestamp"
+        android:layout_toEndOf="@+id/profile_image"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="2dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:background="@drawable/background_left"/>
 
 </RelativeLayout>

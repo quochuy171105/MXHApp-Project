@@ -97,7 +97,7 @@ public class ConversationsFragment extends Fragment {
                                 mConversations.clear();
                                 for (QueryDocumentSnapshot document : task.getResult()) {
                                     User user = document.toObject(User.class);
-                                    Conversation conv = conversationMap.get(user.getUser_id());
+                                    Conversation conv = conversationMap.get(user.getUserId());
                                     if (conv != null) {
                                         conv.setUsername(user.getUsername());
                                         conv.setProfileUrl(user.getProfileUrl());

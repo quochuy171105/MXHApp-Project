@@ -2,6 +2,7 @@ package huynguyen.com.MXHApp.Adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,11 +13,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.Date;
 import java.util.List;
 
 import huynguyen.com.MXHApp.Model.Notifications;
 import huynguyen.com.MXHApp.Model.Posts;
 import huynguyen.com.MXHApp.Model.User;
+import huynguyen.com.MXHApp.OthersProfile;
 import huynguyen.com.MXHApp.PostDetails;
 import huynguyen.com.MXHApp.R;
 import huynguyen.com.MXHApp.databinding.NotificationItemBinding;
@@ -42,9 +45,18 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final Notifications notification = mNotifications.get(position);
 
-        // FIX: Use new getter methods
         holder.binding.comment.setText(notification.getText());
         getUserInfo(holder, notification.getUserId());
+
+        // Set the timestamp
+        if (notification.getTimestamp() != null) {
+            long timeAgo = notification.getTimestamp().getTime();
+            CharSequence relativeTime = DateUtils.getRelativeTimeSpanString(timeAgo, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS);
+            holder.binding.timestamp.setText(relativeTime);
+            holder.binding.timestamp.setVisibility(View.VISIBLE);
+        } else {
+            holder.binding.timestamp.setVisibility(View.GONE);
+        }
 
         if (notification.isPost()) {
             holder.binding.postImage.setVisibility(View.VISIBLE);
@@ -56,11 +68,12 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.itemView.setOnClickListener(v -> {
             if (notification.isPost()) {
                 Intent intent = new Intent(mContext, PostDetails.class);
-                // FIX: Use new getter methods
                 intent.putExtra("postid", notification.getPostId());
                 mContext.startActivity(intent);
             } else {
-                // Handle click on follow notification if needed
+                Intent intent = new Intent(mContext, OthersProfile.class);
+                intent.putExtra("uid", notification.getUserId());
+                mContext.startActivity(intent);
             }
         });
     }
@@ -80,7 +93,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     private void getUserInfo(final ViewHolder holder, String userId) {
-        // FIX: Check for null and use passed argument
         if (userId == null) return;
         FirebaseFirestore.getInstance().collection("users").document(userId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
@@ -94,7 +106,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     private void getPostImage(final ViewHolder holder, String postId) {
-        // FIX: Check for null and use passed argument
         if (postId == null) return;
         FirebaseFirestore.getInstance().collection("posts").document(postId).get().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {

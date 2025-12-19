@@ -1,21 +1,25 @@
 package huynguyen.com.MXHApp.Model;
 
+import com.google.firebase.database.PropertyName;
+
 public class ChatMessage {
     private String message;
     private String senderId;
     private String receiverId;
     private long timestamp;
-    private boolean isSeen;
+    private boolean seen;
+    private String type; // ADDED: To distinguish between "text" and "image"
 
     public ChatMessage() {
     }
 
-    public ChatMessage(String message, String senderId, String receiverId, long timestamp, boolean isSeen) {
+    public ChatMessage(String message, String senderId, String receiverId, long timestamp, boolean isSeen, String type) {
         this.message = message;
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.timestamp = timestamp;
-        this.isSeen = isSeen;
+        this.seen = isSeen;
+        this.type = type; // ADDED
     }
 
     // Getters
@@ -35,8 +39,13 @@ public class ChatMessage {
         return timestamp;
     }
 
+    @PropertyName("seen") // ADDED: to match the database field name
     public boolean isSeen() {
-        return isSeen;
+        return seen;
+    }
+
+    public String getType() { // ADDED
+        return type;
     }
 
     // Setters
@@ -56,7 +65,12 @@ public class ChatMessage {
         this.timestamp = timestamp;
     }
 
+    @PropertyName("seen") // ADDED: to match the database field name
     public void setSeen(boolean seen) {
-        isSeen = seen;
+        this.seen = seen;
+    }
+
+    public void setType(String type) { // ADDED
+        this.type = type;
     }
 }

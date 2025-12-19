@@ -5,6 +5,7 @@ import android.app.Application;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.appcheck.FirebaseAppCheck;
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
 
@@ -15,13 +16,16 @@ public class MyApplication extends Application {
         
         // Initialize general Firebase App
         FirebaseApp.initializeApp(this);
+
+        // ADDED: Enable offline persistence for Realtime Database (for Chat)
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         
         // Initialize Firebase App Check
         FirebaseAppCheck firebaseAppCheck = FirebaseAppCheck.getInstance();
         firebaseAppCheck.installAppCheckProviderFactory(
                 PlayIntegrityAppCheckProviderFactory.getInstance());
 
-        // --- START: ENHANCED OFFLINE CONFIGURATION ---
+        // --- START: ENHANCED OFFLINE CONFIGURATION FOR FIRESTORE ---
         // Get Firestore instance
         FirebaseFirestore firestore = FirebaseFirestore.getInstance();
 
@@ -35,6 +39,6 @@ public class MyApplication extends Application {
         
         // Apply the settings
         firestore.setFirestoreSettings(settings);
-        // --- END: ENHANCED OFFLINE CONFIGURATION ---
+        // --- END: ENHANCED OFFLINE CONFIGURATION FOR FIRESTORE ---
     }
 }
