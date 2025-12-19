@@ -1,10 +1,12 @@
 package huynguyen.com.MXHApp.Adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -17,6 +19,7 @@ import com.google.firebase.auth.FirebaseUser;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import huynguyen.com.MXHApp.FullImageActivity; // We will create this activity next
 import huynguyen.com.MXHApp.Model.ChatMessage;
 import huynguyen.com.MXHApp.R;
 
@@ -27,7 +30,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
 
     private Context mContext;
     private List<ChatMessage> mChatMessages;
-    private String mImageUrl;
+    private String mImageUrl; // Receiver's image URL
 
     private FirebaseUser fUser;
 
@@ -53,9 +56,25 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage chatMessage = mChatMessages.get(position);
 
-        holder.messageText.setText(chatMessage.getMessage());
+        boolean isPhoto = chatMessage.getType() != null && chatMessage.getType().equals("image");
 
-        // Set timestamp
+        if (isPhoto) {
+            holder.messageText.setVisibility(View.GONE);
+            holder.messageImage.setVisibility(View.VISIBLE);
+            Glide.with(mContext).load(chatMessage.getMessage()).into(holder.messageImage);
+
+            holder.messageImage.setOnClickListener(v -> {
+                Intent intent = new Intent(mContext, FullImageActivity.class);
+                intent.putExtra("imageUrl", chatMessage.getMessage());
+                mContext.startActivity(intent);
+            });
+
+        } else {
+            holder.messageText.setVisibility(View.VISIBLE);
+            holder.messageImage.setVisibility(View.GONE);
+            holder.messageText.setText(chatMessage.getMessage());
+        }
+
         if (holder.messageTimestamp != null && chatMessage.getTimestamp() > 0) {
             holder.messageTimestamp.setText(DateUtils.getRelativeTimeSpanString(chatMessage.getTimestamp()));
         }
@@ -68,16 +87,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
             }
         }
 
-        // Logic for seen status
         if (position == mChatMessages.size() - 1) {
-            if (holder.seenStatus != null) { // Check if the view exists (it only exists for MSG_TYPE_RIGHT)
+            if (holder.seenStatus != null) {
                 if (chatMessage.isSeen()) {
                     holder.seenStatus.setText("Seen");
-                    holder.seenStatus.setVisibility(View.VISIBLE);
                 } else {
                     holder.seenStatus.setText("Delivered");
-                    holder.seenStatus.setVisibility(View.VISIBLE);
                 }
+                holder.seenStatus.setVisibility(View.VISIBLE);
             }
         } else {
             if (holder.seenStatus != null) {
@@ -95,14 +112,16 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         public TextView messageText;
         public CircleImageView profileImage;
         public TextView seenStatus;
-        public TextView messageTimestamp; // Added this
+        public TextView messageTimestamp;
+        public ImageView messageImage; // ADDED
 
         public ViewHolder(View itemView) {
             super(itemView);
             messageText = itemView.findViewById(R.id.message_text);
             profileImage = itemView.findViewById(R.id.profile_image);
             seenStatus = itemView.findViewById(R.id.seen_status);
-            messageTimestamp = itemView.findViewById(R.id.message_timestamp); // Added this
+            messageTimestamp = itemView.findViewById(R.id.message_timestamp);
+            messageImage = itemView.findViewById(R.id.message_image); // ADDED
         }
     }
 

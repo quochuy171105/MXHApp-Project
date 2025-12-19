@@ -16,6 +16,7 @@
         android:textColor="?android:attr/textColorSecondary"
         android:text="10:45 AM"/>
 
+    <!-- Text Message -->
     <TextView
         android:id="@+id/message_text"
         android:layout_width="wrap_content"
@@ -23,21 +24,33 @@
         android:layout_below="@id/message_timestamp"
         android:layout_alignParentEnd="true"
         android:layout_marginTop="2dp"
+        android:background="@drawable/background_right"
         android:padding="12dp"
         android:text="This is a sent message"
-        android:background="@drawable/background_right"
-        android:textColor="@android:color/white"
-        android:textAppearance="?attr/textAppearanceBodyLarge"/>
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="@android:color/white" />
+
+    <!-- ADDED: Image Message -->
+    <ImageView
+        android:id="@+id/message_image"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_below="@id/message_timestamp"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="2dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"
+        android:background="@drawable/background_right"/>
 
     <TextView
         android:id="@+id/seen_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/message_text"
+        android:layout_below="@id/message_text" 
         android:layout_alignParentEnd="true"
         android:layout_marginTop="2dp"
+        android:text="Seen"
         android:textSize="12sp"
-        android:visibility="gone"
-        android:text="Seen"/>
+        android:visibility="gone" />
 
 </RelativeLayout>

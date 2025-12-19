@@ -72,7 +72,7 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.View
     }
 
     private void updateUserStatus(User user, String status, String reason) {
-        DocumentReference userRef = firestore.collection("users").document(user.getUser_id());
+        DocumentReference userRef = firestore.collection("users").document(user.getUserId());
         Map<String, Object> updates = new HashMap<>();
         updates.put("accountStatus", status);
         updates.put("statusReason", reason);

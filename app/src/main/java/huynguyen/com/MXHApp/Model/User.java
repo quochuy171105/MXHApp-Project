@@ -1,28 +1,32 @@
 package huynguyen.com.MXHApp.Model;
 
+import com.google.firebase.firestore.PropertyName;
+
 public class User {
     private String username;
     private String email;
     private String memer;
-    private String user_id;
+    private String userId; // RENAMED: from user_id to follow Java conventions
     private String profileUrl;
     private String background;
     private String accountStatus;
     private String statusReason;
+    private String role; // ADDED: missing role field
 
     public User() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public User(String username, String email, String memer, String user_id, String profileUrl, String background, String accountStatus, String statusReason) {
+    public User(String username, String email, String memer, String userId, String profileUrl, String background, String accountStatus, String statusReason, String role) {
         this.username = username;
         this.email = email;
         this.memer = memer;
-        this.user_id = user_id;
+        this.userId = userId;
         this.profileUrl = profileUrl;
         this.background = background;
         this.accountStatus = accountStatus;
         this.statusReason = statusReason;
+        this.role = role;
     }
 
     public String getUsername() {
@@ -49,12 +53,14 @@ public class User {
         this.memer = memer;
     }
 
-    public String getUser_id() {
-        return user_id;
+    @PropertyName("user_id") // Maps the user_id field in Firestore to this property
+    public String getUserId() {
+        return userId;
     }
 
-    public void setUser_id(String user_id) {
-        this.user_id = user_id;
+    @PropertyName("user_id")
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getProfileUrl() {
@@ -87,5 +93,13 @@ public class User {
 
     public void setStatusReason(String statusReason) {
         this.statusReason = statusReason;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
