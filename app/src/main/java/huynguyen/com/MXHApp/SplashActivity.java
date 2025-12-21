@@ -26,7 +26,8 @@ public class SplashActivity extends AppCompatActivity {
     private void checkUserStatus() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
-            startActivity(new Intent(SplashActivity.this, MainActivity.class));
+            // **FIXED**: User not logged in, go to Login screen instead of Registration
+            startActivity(new Intent(SplashActivity.this, Login.class));
             finish();
         } else {
             // User is logged in, check their role and status from Firestore
@@ -36,18 +37,21 @@ public class SplashActivity extends AppCompatActivity {
                     String role = task.getResult().getString("role");
                     String accountStatus = task.getResult().getString("accountStatus");
 
-                    if ("blocked".equals(accountStatus)) {
-                        Toast.makeText(SplashActivity.this, "Account is blocked.", Toast.LENGTH_LONG).show();
-                        FirebaseAuth.getInstance().signOut();
-                        startActivity(new Intent(SplashActivity.this, Login.class));
+                    if (!"active".equals(accountStatus)) {
+                        // Go to status screen if account is not active
+                        Intent intent = new Intent(SplashActivity.this, AccountStatusActivity.class);
+                        intent.putExtra("reason", task.getResult().getString("statusReason"));
+                        startActivity(intent);
                     } else if ("admin".equals(role)) {
+                        // Go to admin screen
                         startActivity(new Intent(SplashActivity.this, AdminActivity.class));
                     } else {
+                        // Go to home screen for normal users
                         startActivity(new Intent(SplashActivity.this, HomeActivity.class));
                     }
                 } else {
-                    // User data not found in Firestore, treat as new/invalid user
-                    startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    // User data not found in Firestore, treat as new/invalid user, go to Login
+                    startActivity(new Intent(SplashActivity.this, Login.class));
                 }
                 finish();
             });

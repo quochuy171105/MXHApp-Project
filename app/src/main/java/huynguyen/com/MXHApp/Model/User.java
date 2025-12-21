@@ -2,6 +2,10 @@ package huynguyen.com.MXHApp.Model;
 
 import com.google.firebase.firestore.PropertyName;
 
+import java.text.Normalizer;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
 public class User {
     private String username;
     private String email;
@@ -12,6 +16,7 @@ public class User {
     private String accountStatus;
     private String statusReason;
     private String role; // ADDED: missing role field
+    private String searchableName; // ADDED: for case-insensitive and diacritic-insensitive search
 
     public User() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
@@ -27,6 +32,19 @@ public class User {
         this.accountStatus = accountStatus;
         this.statusReason = statusReason;
         this.role = role;
+        // Ensure searchableName is set on creation
+        this.searchableName = generateSearchableName(username);
+    }
+
+    // Helper function to generate a searchable, lowercase, accent-free name
+    private String generateSearchableName(String input) {
+        if (input == null) {
+            return null;
+        }
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String withoutAccents = pattern.matcher(normalized).replaceAll("");
+        return withoutAccents.toLowerCase(Locale.ROOT);
     }
 
     public String getUsername() {
@@ -35,6 +53,8 @@ public class User {
 
     public void setUsername(String username) {
         this.username = username;
+        // Keep searchableName in sync with username
+        this.searchableName = generateSearchableName(username);
     }
 
     public String getEmail() {
@@ -101,5 +121,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSearchableName() {
+        return searchableName;
+    }
+
+    public void setSearchableName(String searchableName) {
+        this.searchableName = searchableName;
     }
 }

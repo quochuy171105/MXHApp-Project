@@ -1,11 +1,16 @@
 package huynguyen.com.MXHApp;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -58,6 +63,36 @@ public class Login extends AppCompatActivity {
             startActivity(new Intent(Login.this, MainActivity.class));
             finish();
         });
+
+        binding.forgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+    }
+
+    private void showForgotPasswordDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Forgot Password");
+
+        final EditText emailInput = new EditText(this);
+        emailInput.setHint("Enter your email");
+        builder.setView(emailInput);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String email = emailInput.getText().toString().trim();
+            if (!TextUtils.isEmpty(email)) {
+                auth.sendPasswordResetEmail(email)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(Login.this, "Password reset email sent.", Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(Login.this, "Failed to send reset email.", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            } else {
+                Toast.makeText(Login.this, "Please enter your email.", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     private void loginUser() {
@@ -158,11 +193,15 @@ public class Login extends AppCompatActivity {
                 String role = task.getResult().getString("role");
                 String accountStatus = task.getResult().getString("accountStatus");
 
-                if ("blocked".equals(accountStatus)) {
+                // **FIXED**: Redirect to AccountStatusActivity if the account is not active.
+                if (!"active".equals(accountStatus)) {
                     String reason = task.getResult().getString("statusReason");
-                    Toast.makeText(Login.this, "Account blocked: " + reason, Toast.LENGTH_LONG).show();
-                    auth.signOut();
-                    return;
+                    Intent intent = new Intent(Login.this, AccountStatusActivity.class);
+                    intent.putExtra("reason", reason);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    finish();
+                    return; // Stop further execution
                 }
 
                 Intent intent;
