@@ -26,9 +26,11 @@ import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,8 +103,15 @@ public class MainActivity extends AppCompatActivity {
         String userId = firebaseUser.getUid();
         DocumentReference userRef = firestore.collection("users").document(userId);
 
+        String searchableName = "";
+        if (username != null && !username.isEmpty()) {
+            String normalized = Normalizer.normalize(username, Normalizer.Form.NFD);
+            Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+            searchableName = pattern.matcher(normalized).replaceAll("").toLowerCase(Locale.ROOT);
+        }
+
         HashMap<String, Object> map = new HashMap<>();
-        map.put("username", username.toLowerCase(Locale.ROOT));
+        map.put("username", username);
         map.put("email", firebaseUser.getEmail());
         map.put("memer", memerName); // Use username as initial memer name
         map.put("user_id", userId);
@@ -111,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
         map.put("accountStatus", "active");
         map.put("statusReason", "");
         map.put("role", "user");
+        map.put("searchableName", searchableName);
 
         userRef.set(map).addOnCompleteListener(dbTask -> {
             setInProgress(false);
