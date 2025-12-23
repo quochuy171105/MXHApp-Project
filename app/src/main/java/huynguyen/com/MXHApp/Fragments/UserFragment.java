@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import huynguyen.com.MXHApp.Adapter.PhotosAdapter;
+import huynguyen.com.MXHApp.AdminActivity;
 import huynguyen.com.MXHApp.EditProfileActivity;
 import huynguyen.com.MXHApp.Login;
 import huynguyen.com.MXHApp.Model.Posts;
@@ -220,25 +221,43 @@ public class UserFragment extends Fragment {
     }
 
     private void showOptionsMenu(View view) {
-        if (getContext() == null) return;
+        if (getContext() == null || user == null) return;
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenuInflater().inflate(R.menu.profile_options_menu, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.logout_option) {
-                if (getContext() != null) {
-                    SharedPreferences.Editor editor = getContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE).edit();
-                    editor.remove("profileid");
-                    editor.apply();
-                }
 
-                auth.signOut();
-                Intent intent = new Intent(getActivity(), Login.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
+        firestore.collection("users").document(user.getUid()).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                String role = documentSnapshot.getString("role");
+                if ("admin".equals(role)) {
+                    popupMenu.getMenu().findItem(R.id.admin_mode_option).setVisible(true);
+                }
+            }
+        });
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.logout_option) {
+                logoutUser();
+                return true;
+            } else if (itemId == R.id.admin_mode_option) {
+                startActivity(new Intent(getContext(), AdminActivity.class));
                 return true;
             }
             return false;
         });
         popupMenu.show();
+    }
+
+    private void logoutUser() {
+        if (getContext() != null) {
+            SharedPreferences.Editor editor = getContext().getSharedPreferences("PREFS", Context.MODE_PRIVATE).edit();
+            editor.remove("profileid");
+            editor.apply();
+        }
+
+        auth.signOut();
+        Intent intent = new Intent(getActivity(), Login.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     private void getUserData() {

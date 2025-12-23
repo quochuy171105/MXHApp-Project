@@ -80,10 +80,17 @@ public class AdminActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == R.id.admin_logout) {
+        int itemId = item.getItemId();
+        if (itemId == R.id.admin_logout) {
             auth.signOut();
             Intent intent = new Intent(AdminActivity.this, Login.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
+            return true;
+        } else if (itemId == R.id.back_to_user_mode) {
+            Intent intent = new Intent(AdminActivity.this, HomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             finish();
             return true;
