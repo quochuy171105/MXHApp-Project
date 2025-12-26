@@ -4,11 +4,10 @@
 
 ## Demo
 
-*(Bạn có thể chèn ảnh chụp màn hình hoặc GIF demo các chức năng của ứng dụng tại đây)*
 
 | Trang Đăng nhập | Trang Feed | Trang Profile |
 | :---: | :---: | :---: |
-| *![img_2.png](img_2.png)* | *![img_1.png](img_1.png)* | *![img.png](img.png)* |
+| *![img_3.png](img_3.png)* | *![img_1.png](img_1.png)* | *![img.png](img.png)* |
 
 ## Tính năng chính
 
@@ -83,4 +82,4 @@
 
 ## Tác giả
 
-*Nguyễn Quốc Huy*
+*...*
